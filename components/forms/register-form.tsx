@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+import { register } from '@/lib/api/auth';
 
 const RegisterForm = () => {
   const [firstName, setFirstName] = useState('');
@@ -15,36 +18,43 @@ const RegisterForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const router = useRouter();
+
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError('');
 
+    // throws error message if a field is empty
     if (!firstName || !lastName || !email || !password || !confirmPassword) {
       setError('Please fill in all required fields.');
       return;
     }
 
+    // throws error message if password length is less than 8
     if (password.length < 8) {
       setError('Password must be at least 8 characters.');
       return;
     }
 
+    // throws error message if passwords don't match
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
       return;
     }
 
+    // set loading state to disable button and show feedback
     setIsSubmitting(true);
 
     try {
-      console.log({
-        firstName,
-        lastName,
-        email,
-        password,
-        confirmPassword,
-      });
+      // calls backend login endpoint
+      await register(firstName, lastName, email, password);
+
+      // if registration is successful, redirects user to login
+      router.push('/login?registered=true');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Account registration failed');
     } finally {
+      // resets loading state after request completes
       setIsSubmitting(false);
     }
   }
