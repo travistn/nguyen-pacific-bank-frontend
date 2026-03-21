@@ -1,6 +1,13 @@
+'use client';
+
+import { useSearchParams } from 'next/navigation';
+
 import LoginForm from '@/components/forms/login-form';
 
 const LoginPage = () => {
+  const searchParams = useSearchParams();
+  const registered = searchParams.get('registered') === 'true';
+
   return (
     <main className='min-h-screen bg-[#b9d3d4] px-4 py-6 md:px-6 md:py-10 xl:px-8 xl:py-14'>
       <section className='mx-auto grid min-h-[calc(100vh-3rem)] max-w-7xl overflow-hidden rounded-4xl border border-white/30 bg-[#071018] shadow-[0_20px_60px_rgba(0,0,0,0.22)] md:min-h-175 md:grid-cols-2 xl:min-h-190'>
@@ -36,6 +43,11 @@ const LoginPage = () => {
                 Sign in to your account
               </h2>
             </div>
+            {registered && (
+              <div className='mb-5 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200 md:text-base'>
+                Account created successfully. Please sign in.
+              </div>
+            )}
             <LoginForm />
           </div>
         </div>
