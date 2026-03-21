@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+import { login } from '@/lib/api/auth';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -11,25 +14,42 @@ const LoginForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const router = useRouter();
+
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError('');
 
+    // throws error message if email or password is empty
     if (!email || !password) {
       setError('Please enter your email and password.');
       return;
     }
 
+    // throws error message if password length is less than 8
     if (password.length < 8) {
       setError('Password must be at least 8 characters.');
       return;
     }
 
+    // set loading state to disable button and show feedback
     setIsSubmitting(true);
 
     try {
-      console.log({ email, password });
+      // calls backend login endpoint
+      const data = await login(email, password);
+
+      // saves JWT token in localStorage to persist authentication
+      localStorage.setItem('token', data.token);
+
+      // if login is successful, redirects user to dashboard
+      router.push('/dashboard');
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      alert('Login failed');
     } finally {
+      // resets loading state after request completes
       setIsSubmitting(false);
     }
   }
