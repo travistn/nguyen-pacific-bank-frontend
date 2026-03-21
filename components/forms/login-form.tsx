@@ -44,10 +44,8 @@ const LoginForm = () => {
 
       // if login is successful, redirects user to dashboard
       router.push('/dashboard');
-
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      alert('Login failed');
+      setError(error instanceof Error ? error.message : 'Login failed');
     } finally {
       // resets loading state after request completes
       setIsSubmitting(false);

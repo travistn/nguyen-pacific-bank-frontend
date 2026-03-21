@@ -45,16 +45,14 @@ const RegisterForm = () => {
     // set loading state to disable button and show feedback
     setIsSubmitting(true);
 
-    // if registration is successful, redirects user to login
-    router.push('/login?registered=true');
-
     try {
       // calls backend login endpoint
       await register(firstName, lastName, email, password);
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // if registration is successful, redirects user to login
+      router.push('/login?registered=true');
     } catch (error) {
-      alert('Account registration failed');
+      setError(error instanceof Error ? error.message : 'Account registration failed');
     } finally {
       // resets loading state after request completes
       setIsSubmitting(false);
