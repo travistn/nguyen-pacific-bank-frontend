@@ -1,13 +1,11 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
-  const token = localStorage.getItem('token');
-
   const res = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
     },
   });
@@ -16,5 +14,15 @@ export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
     throw new Error(await res.text());
   }
 
-  return res.json();
+  if (res.status === 204) {
+    return null;
+  }
+
+  const contentType = res.headers.get('content-type');
+
+  if (contentType?.includes('application/json')) {
+    return res.json();
+  }
+
+  return res.text();
 };

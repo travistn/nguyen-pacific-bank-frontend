@@ -23,3 +23,9 @@ export const register = async (
     }),
   });
 };
+
+export const logout = async () => {
+  return apiFetch('/api/auth/logout', {
+    method: 'POST',
+  });
+};

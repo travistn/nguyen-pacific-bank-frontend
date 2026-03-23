@@ -37,15 +37,13 @@ const LoginForm = () => {
 
     try {
       // calls backend login endpoint
-      const data = await login(email, password);
-
-      // saves JWT token in localStorage to persist authentication
-      localStorage.setItem('token', data.token);
+      await login(email, password);
 
       // if login is successful, redirects user to dashboard
       router.push('/dashboard');
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Login failed');
+      setError('Invalid error or password');
+      console.log(error);
     } finally {
       // resets loading state after request completes
       setIsSubmitting(false);
