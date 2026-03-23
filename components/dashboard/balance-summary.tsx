@@ -61,7 +61,7 @@ const BalanceSummary = () => {
     .reduce((sum, acc) => sum + acc.balance, 0);
 
   return (
-    <div className='rounded-2xl bg-[#0f1a2b] p-6 shadow-lg'>
+    <section className='rounded-2xl bg-[#0f1a2b] p-6 shadow-lg'>
       <h2 className='text-sm text-gray-400'>Total Balance</h2>
       <p className='mt-2 text-3xl font-bold text-white'>{formatMoney(totalBalance)}</p>
       <p className='mt-1 text-xs text-gray-400'>
@@ -77,7 +77,7 @@ const BalanceSummary = () => {
           <p className='text-lg font-semibold text-white'>{formatMoney(savingsTotal)}</p>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 
