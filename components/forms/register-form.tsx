@@ -52,7 +52,8 @@ const RegisterForm = () => {
       // if registration is successful, redirects user to login
       router.push('/login?registered=true');
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Account registration failed');
+      setError('Account registration failed');
+      console.log(error);
     } finally {
       // resets loading state after request completes
       setIsSubmitting(false);
