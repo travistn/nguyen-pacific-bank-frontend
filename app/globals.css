@@ -1,1 +1,110 @@
 @import 'tailwindcss';
+
+:root {
+  --color-page-bg: #b9d3d4;
+  --color-shell: #071018;
+  --color-card: #1a2024;
+  --color-accent-primary: #bfffd8;
+  --color-accent-secondary: #96dded;
+  --color-text-primary: #fcfcfc;
+
+  --color-text-secondary: rgba(252, 252, 252, 0.72);
+  --color-text-muted: rgba(252, 252, 252, 0.5);
+  --color-border: rgba(252, 252, 252, 0.12);
+  --color-overlay: rgba(252, 252, 252, 0.05);
+}
+
+@layer components {
+  .dashboard-panel {
+    border: 1px solid var(--color-border);
+    background-color: var(--color-overlay);
+  }
+
+  .dashboard-card {
+    border-radius: 1rem;
+    background-color: var(--color-card);
+    color: var(--color-text-primary);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  }
+
+  .dashboard-subcard {
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    background-color: var(--color-overlay);
+  }
+
+  .dashboard-chip {
+    border: 1px solid var(--color-border);
+    background-color: var(--color-shell);
+    color: var(--color-text-secondary);
+  }
+
+  .dashboard-chip-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .dashboard-chip-active {
+    border-color: color-mix(in srgb, var(--color-accent-primary) 35%, transparent);
+    background-color: color-mix(in srgb, var(--color-accent-primary) 14%, transparent);
+    color: var(--color-accent-primary);
+  }
+
+  .dashboard-accent-value {
+    color: var(--color-accent-primary);
+  }
+
+  .dashboard-accent-divider {
+    background: linear-gradient(
+      90deg,
+      var(--color-accent-primary) 0%,
+      color-mix(in srgb, var(--color-accent-secondary) 45%, transparent) 100%
+    );
+  }
+
+  .dashboard-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .dashboard-heading {
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .dashboard-section-title {
+    font-size: 1.25rem;
+    line-height: 1.2;
+  }
+
+  .dashboard-support {
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: var(--color-text-muted);
+  }
+
+  .dashboard-status {
+    display: flex;
+    min-height: 12rem;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .dashboard-status-error {
+    border: 1px solid color-mix(in srgb, var(--color-accent-secondary) 28%, var(--color-border));
+  }
+
+  .dashboard-skeleton-strong {
+    background-color: rgba(255, 255, 255, 0.5);
+  }
+
+  .dashboard-skeleton-soft {
+    background-color: var(--color-border);
+  }
+}

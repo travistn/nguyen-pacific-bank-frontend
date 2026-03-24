@@ -42,12 +42,22 @@ const BalanceSummary = () => {
 
   if (loading) {
     return (
-      <div className='rounded-2xl bg-[#0f1a2b] p-6 shadow-lg text-white'>Loading balance...</div>
+      <section className='dashboard-card dashboard-status p-5 md:p-6 xl:p-7'>
+        <p className='dashboard-eyebrow'>Overview</p>
+        <h2 className='dashboard-heading dashboard-section-title'>Loading Balance</h2>
+        <p className='dashboard-support'>{`We're pulling in your latest account totals.`}</p>
+      </section>
     );
   }
 
   if (error) {
-    return <div className='rounded-2xl bg-[#0f1a2b] p-6 text-white shadow-lg'>{error}</div>;
+    return (
+      <section className='dashboard-card dashboard-status dashboard-status-error p-5 md:p-6 xl:p-7'>
+        <p className='dashboard-eyebrow'>Overview</p>
+        <h2 className='dashboard-heading dashboard-section-title'>Balance Unavailable</h2>
+        <p className='dashboard-support'>{error}</p>
+      </section>
+    );
   }
 
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
@@ -61,20 +71,34 @@ const BalanceSummary = () => {
     .reduce((sum, acc) => sum + acc.balance, 0);
 
   return (
-    <section className='rounded-2xl bg-[#0f1a2b] p-6 shadow-lg'>
-      <h2 className='text-sm text-gray-400'>Total Balance</h2>
-      <p className='mt-2 text-3xl font-bold text-white'>{formatMoney(totalBalance)}</p>
-      <p className='mt-1 text-xs text-gray-400'>
-        {accounts.length} account{accounts.length !== 1 && 's'}
-      </p>
-      <div className=' mt-6 grid grid-cols-2 gap-4'>
+    <section className='dashboard-card p-5 md:p-6 xl:p-7'>
+      <div className='mb-4 flex items-end justify-between gap-3 md:mb-5'>
         <div>
-          <p className='text-xs text-gray-400'>Checking</p>
-          <p className='text-lg font-semibold text-white'>{formatMoney(checkingTotal)}</p>
+          <p className='dashboard-eyebrow'>Overview</p>
+          <h2 className='dashboard-heading dashboard-section-title mt-2 md:text-2xl'>
+            Total Balance
+          </h2>
+        </div>
+        <p className='dashboard-support md:text-base'>
+          {`${accounts.length} account${accounts.length !== 1 ? 's' : ''}`}
+        </p>
+      </div>
+      <div className='dashboard-accent-divider mb-4 h-px w-20 rounded-full md:mb-5' />
+      <p className='dashboard-accent-value text-2xl font-semibold md:text-3xl'>
+        {formatMoney(totalBalance)}
+      </p>
+      <div className='mt-6 grid grid-cols-2 gap-4 md:mt-7'>
+        <div>
+          <p className='dashboard-support'>Checking</p>
+          <p className='dashboard-heading dashboard-section-title mt-2 md:text-2xl'>
+            {formatMoney(checkingTotal)}
+          </p>
         </div>
         <div>
-          <p className='text-xs text-gray-400'>Savings</p>
-          <p className='text-lg font-semibold text-white'>{formatMoney(savingsTotal)}</p>
+          <p className='dashboard-support'>Savings</p>
+          <p className='dashboard-heading dashboard-section-title mt-2 md:text-2xl'>
+            {formatMoney(savingsTotal)}
+          </p>
         </div>
       </div>
     </section>
