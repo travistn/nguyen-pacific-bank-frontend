@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { apiFetch } from '@/lib/api/client';
 
@@ -42,7 +42,7 @@ const AccountsList = () => {
 
   const maskAccountNumber = (accountNumber: string) => {
     const lastFour = accountNumber.slice(-4);
-    return `•••• ${lastFour}`;
+    return `**** ${lastFour}`;
   };
 
   const formatAccountType = (type: Account['type']) => {
@@ -51,19 +51,19 @@ const AccountsList = () => {
 
   if (loading) {
     return (
-      <section className='rounded-2xl bg-[#0f1a2b] p-5 shadow-sm md:p-6 xl:p-7'>
+      <section className='dashboard-card p-5 md:p-6 xl:p-7'>
         <div className='mb-4'>
-          <p className='text-sm font-medium uppercase tracking-[0.2em] text-slate-400'>Accounts</p>
-          <h2 className='mt-2 text-xl font-semibold text-white md:text-2xl'>Your accounts</h2>
+          <p className='dashboard-eyebrow'>Accounts</p>
+          <h2 className='dashboard-heading dashboard-section-title mt-2 md:text-2xl'>
+            Your Accounts
+          </h2>
         </div>
         <div className='space-y-3'>
           {[1, 2].map((item) => (
-            <div
-              key={item}
-              className='animate-pulse rounded-2xl border border-slate-800 bg-[#122033] p-4 md:p-5'>
-              <div className='mb-3 h-4 w-28 rounded bg-slate-700' />
-              <div className='mb-2 h-3 w-20 rounded bg-slate-800' />
-              <div className='h-6 w-32 rounded bg-slate-700' />
+            <div key={item} className='dashboard-subcard animate-pulse p-4 md:p-5'>
+              <div className='dashboard-skeleton-strong mb-3 h-4 w-28 rounded' />
+              <div className='dashboard-skeleton-soft mb-2 h-3 w-20 rounded' />
+              <div className='dashboard-skeleton-strong h-6 w-32 rounded' />
             </div>
           ))}
         </div>
@@ -72,41 +72,47 @@ const AccountsList = () => {
   }
 
   if (error) {
-    return <div className='rounded-2xl bg-[#0f1a2b] p-6 text-white shadow-lg'>{error}</div>;
+    return (
+      <section className='dashboard-card dashboard-status dashboard-status-error p-5 md:p-6 xl:p-7'>
+        <p className='dashboard-eyebrow'>Accounts</p>
+        <h2 className='dashboard-heading dashboard-section-title'>Accounts Unavailable</h2>
+        <p className='dashboard-support'>{error}</p>
+      </section>
+    );
   }
 
   return (
-    <section className='rounded-2xl bg-[#0f1a2b] p-5 shadow-sm md:p-6 xl:p-7'>
+    <section className='dashboard-card p-5 md:p-6 xl:p-7'>
       <div className='mb-4 flex items-end justify-between gap-3'>
         <div>
-          <p className='text-sm font-medium uppercase tracking-[0.2em] text-slate-400'>Accounts</p>
-          <h2 className='mt-2 text-xl font-semibold text-white md:text-2xl'>Your Accounts</h2>
+          <p className='dashboard-eyebrow'>Accounts</p>
+          <h2 className='dashboard-heading dashboard-section-title mt-2 md:text-2xl'>
+            Your Accounts
+          </h2>
         </div>
-        <p className='text-sm text-slate-400 md:text-base'>
+        <p className='dashboard-support md:text-base'>
           {`${accounts.length} account${accounts.length > 1 ? 's' : ''}`}
         </p>
       </div>
       <div className='grid gap-3 md:gap-4 xl:grid-cols-4'>
-        {accounts?.map((account) => (
+        {accounts.map((account) => (
           <article
             key={account.id}
-            className='rounded-2xl border border-slate-800 bg-[#122033] p-4 transition hover:border-slate-700 hover:bg-[#16263d] md:p-5'>
+            className='dashboard-subcard p-4 transition hover:bg-(--color-card) md:p-5 hover:cursor-pointer'>
             <div className='flex items-start justify-between gap-3'>
               <div>
-                <p className='text-sm font-medium uppercase tracking-[0.16em] text-slate-400'>
-                  {formatAccountType(account.type)}
-                </p>
-                <p className='mt-2 text-sm text-slate-500 md:text-base'>
+                <p className='dashboard-eyebrow'>{formatAccountType(account.type)}</p>
+                <p className='dashboard-support mt-2 md:text-base'>
                   {maskAccountNumber(account.accountNumber)}
                 </p>
               </div>
-              <span className='rounded-full bg-slate-800 px-3 py-1 text-xs font-medium uppercase tracking-[0.16em] text-slate-300'>
+              <span className='dashboard-chip dashboard-chip-active dashboard-chip-label rounded-full px-3 py-1'>
                 Active
               </span>
             </div>
             <div className='mt-6'>
-              <p className='text-sm text-slate-400'>Available balance</p>
-              <p className='mt-2 text-2xl font-semibold text-white md:text-3xl'>
+              <p className='dashboard-support'>Available Balance</p>
+              <p className='dashboard-heading mt-2 text-2xl md:text-3xl'>
                 {formatMoney(account.balance)}
               </p>
             </div>
