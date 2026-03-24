@@ -2,6 +2,7 @@ import AccountsList from '@/components/dashboard/accounts-list';
 import BalanceSummary from '@/components/dashboard/balance-summary';
 import DashboardHeader from '@/components/dashboard/dashboard-header';
 import RecentTransactions from '@/components/dashboard/recent-transactions';
+import CreateTransactionCard from '@/components/dashboard/create-transaction-card';
 
 const DashboardPage = () => {
   return (
@@ -11,6 +12,7 @@ const DashboardPage = () => {
         <div className='dashboard-panel mt-6 flex-1 rounded-3xl p-5 space-y-5 md:mt-8 md:p-6 md:space-y-6 xl:p-7 xl:space-y-7'>
           <BalanceSummary />
           <AccountsList />
+          <CreateTransactionCard />
           <RecentTransactions />
         </div>
       </section>

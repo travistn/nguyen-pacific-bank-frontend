@@ -81,6 +81,13 @@ const AccountsList = () => {
     );
   }
 
+  const sortedAccounts = [...accounts].sort((a, b) => {
+    if (a.type === b.type) return 0;
+    if (a.type === 'CHECKING') return -1;
+    if (b.type === 'CHECKING') return 1;
+    return 0;
+  });
+
   return (
     <section className='dashboard-card p-5 md:p-6 xl:p-7'>
       <div className='mb-4 flex items-end justify-between gap-3'>
@@ -95,7 +102,7 @@ const AccountsList = () => {
         </p>
       </div>
       <div className='grid gap-3 md:gap-4 xl:grid-cols-4'>
-        {accounts.map((account) => (
+        {sortedAccounts.map((account) => (
           <article
             key={account.id}
             className='dashboard-subcard p-4 transition hover:bg-(--color-card) md:p-5 hover:cursor-pointer'>
