@@ -1,8 +1,8 @@
 'use client';
 
-import { apiFetch } from '@/lib/api/client';
 import { useRouter } from 'next/navigation';
 
+import { apiFetch } from '@/lib/api/client';
 import { useState, useEffect } from 'react';
 
 type Account = {
