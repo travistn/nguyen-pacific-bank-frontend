@@ -101,6 +101,7 @@ const AccountsList = () => {
           {`${accounts.length} account${accounts.length > 1 ? 's' : ''}`}
         </p>
       </div>
+      <div className='dashboard-accent-divider mb-4 h-px w-20 rounded-full md:mb-5' />
       <div className='grid gap-3 md:gap-4 xl:grid-cols-4'>
         {sortedAccounts.map((account) => (
           <article
