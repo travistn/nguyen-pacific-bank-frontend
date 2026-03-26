@@ -1,5 +1,9 @@
-import Link from 'next/link';
+'use client';
 
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+
+import { apiFetch } from '@/lib/api/client';
 import TransactionHistoryFilters, {
   type TransactionFilters,
 } from '@/components/transactions/transaction-history-filters';
@@ -13,6 +17,12 @@ type Transaction = {
   accountType: 'CHECKING' | 'SAVINGS';
 };
 
+type Account = {
+  id: number;
+  accountNumber: string;
+  type: 'CHECKING' | 'SAVINGS';
+};
+
 type TransactionListProps = {
   transactions: Transaction[];
   filters: TransactionFilters;
@@ -20,6 +30,25 @@ type TransactionListProps = {
 };
 
 const TransactionList = ({ transactions, filters, onFiltersChange }: TransactionListProps) => {
+  const [accounts, setAccounts] = useState<Account[]>([]);
+
+  useEffect(() => {
+    const loadAccounts = async () => {
+      try {
+        const data = await apiFetch('/api/accounts');
+        setAccounts(data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    loadAccounts();
+  }, []);
+
+  const getAccountByType = (type: Account['type']) => {
+    return accounts.find((account) => account.type === type);
+  };
+
   const formatMoney = (value: number) =>
     new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -33,13 +62,20 @@ const TransactionList = ({ transactions, filters, onFiltersChange }: Transaction
       year: 'numeric',
     });
 
+  const maskAccountNumbersInText = (text: string) => {
+    return text.replace(/\d{5,}/g, (match) => {
+      const last4 = match.slice(-4);
+      return `**** ${last4}`;
+    });
+  };
+
   const isIncomingTransaction = (type: Transaction['type']) => {
     return type === 'DEPOSIT' || type === 'TRANSFER_IN';
   };
 
   const formatTransactionLabel = (transaction: Transaction) => {
     if (transaction.description?.trim()) {
-      return transaction.description;
+      return maskAccountNumbersInText(transaction.description);
     }
 
     switch (transaction.type) {
@@ -97,8 +133,11 @@ const TransactionList = ({ transactions, filters, onFiltersChange }: Transaction
         <div className='grid gap-3 md:gap-4'>
           {transactions.map((transaction) => {
             const isIncoming = isIncomingTransaction(transaction.type);
+            const account = getAccountByType(transaction.accountType);
             return (
-              <article key={transaction.id} className='dashboard-subcard p-4 md:p-5'>
+              <article
+                key={transaction.id}
+                className='dashboard-subcard p-4 transition hover:bg-(--color-card) md:p-5'>
                 <div className='flex items-start justify-between gap-3'>
                   <div className='min-w-0'>
                     <p className='dashboard-eyebrow'>{transaction.type.replace('_', ' ')}</p>
@@ -106,8 +145,16 @@ const TransactionList = ({ transactions, filters, onFiltersChange }: Transaction
                       {formatTransactionLabel(transaction)}
                     </p>
                     <p className='dashboard-support mt-2 md:text-base'>
-                      {formatAccountType(transaction.accountType)} •{' '}
-                      {formatDate(transaction.transactionDate)}
+                      {account ? (
+                        <Link
+                          href={`/dashboard/accounts/${account.accountNumber}`}
+                          className='transition hover:text-(--color-accent-primary) hover:underline'>
+                          {formatAccountType(transaction.accountType)}
+                        </Link>
+                      ) : (
+                        formatAccountType(transaction.accountType)
+                      )}{' '}
+                      • {formatDate(transaction.transactionDate)}
                     </p>
                   </div>
                   <p

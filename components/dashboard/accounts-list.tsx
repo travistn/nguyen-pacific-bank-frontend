@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { apiFetch } from '@/lib/api/client';
@@ -104,9 +105,10 @@ const AccountsList = () => {
       <div className='dashboard-accent-divider mb-4 h-px w-20 rounded-full md:mb-5' />
       <div className='grid gap-3 md:gap-4 xl:grid-cols-4'>
         {sortedAccounts.map((account) => (
-          <article
+          <Link
             key={account.id}
-            className='dashboard-subcard p-4 transition hover:bg-(--color-card) md:p-5 hover:cursor-pointer'>
+            href={`/dashboard/accounts/${account.accountNumber}`}
+            className='dashboard-subcard block p-4 transition hover:cursor-pointer hover:bg-(--color-card) md:p-5'>
             <div className='flex items-start justify-between gap-3'>
               <div>
                 <p className='dashboard-eyebrow'>{formatAccountType(account.type)}</p>
@@ -124,7 +126,7 @@ const AccountsList = () => {
                 {formatMoney(account.balance)}
               </p>
             </div>
-          </article>
+          </Link>
         ))}
       </div>
     </section>
