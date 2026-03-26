@@ -14,8 +14,15 @@ type Transaction = {
   accountType: 'CHECKING' | 'SAVINGS';
 };
 
+type Account = {
+  id: number;
+  accountNumber: string;
+  type: 'CHECKING' | 'SAVINGS';
+};
+
 const RecentTransactions = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showMore, setShowMore] = useState(false);
@@ -23,14 +30,18 @@ const RecentTransactions = () => {
   useEffect(() => {
     const loadTransactions = async () => {
       try {
-        const data = await apiFetch('/api/transactions');
+        const [transactionsData, accountsData] = await Promise.all([
+          apiFetch('/api/transactions'),
+          apiFetch('/api/accounts'),
+        ]);
 
-        const sortedTransactions = [...data].sort(
+        const sortedTransactions = [...transactionsData].sort(
           (a: Transaction, b: Transaction) =>
             new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime(),
         );
 
         setTransactions(sortedTransactions);
+        setAccounts(accountsData);
       } catch (error) {
         console.log(error);
         setError('Unable to load transactions');
@@ -41,6 +52,10 @@ const RecentTransactions = () => {
 
     loadTransactions();
   }, []);
+
+  const getAccountByType = (type: Account['type']) => {
+    return accounts.find((account) => account.type === type);
+  };
 
   const formatMoney = (value: number) =>
     new Intl.NumberFormat('en-US', {
@@ -55,13 +70,20 @@ const RecentTransactions = () => {
       year: 'numeric',
     });
 
+  const maskAccountNumbersInText = (text: string) => {
+    return text.replace(/\d{5,}/g, (match) => {
+      const last4 = match.slice(-4);
+      return `**** ${last4}`;
+    });
+  };
+
   const isIncomingTransaction = (type: Transaction['type']) => {
     return type === 'DEPOSIT' || type === 'TRANSFER_IN';
   };
 
   const formatTransactionLabel = (transaction: Transaction) => {
     if (transaction.description?.trim()) {
-      return transaction.description;
+      return maskAccountNumbersInText(transaction.description);
     }
 
     switch (transaction.type) {
@@ -157,8 +179,11 @@ const RecentTransactions = () => {
           <div className='grid gap-3 md:gap-4'>
             {visibleTransactions.map((transaction) => {
               const isIncoming = isIncomingTransaction(transaction.type);
+              const account = getAccountByType(transaction.accountType);
               return (
-                <article key={transaction.id} className='dashboard-subcard p-4 md:p-5'>
+                <article
+                  key={transaction.id}
+                  className='dashboard-subcard p-4 transition hover:bg-(--color-card) md:p-5'>
                   <div className='flex items-start justify-between gap-3'>
                     <div className='min-w-0'>
                       <p className='dashboard-eyebrow'>{transaction.type.replace('_', ' ')}</p>
@@ -166,8 +191,16 @@ const RecentTransactions = () => {
                         {formatTransactionLabel(transaction)}
                       </p>
                       <p className='dashboard-support mt-2 md:text-base'>
-                        {formatAccountType(transaction.accountType)} •{' '}
-                        {formatDate(transaction.transactionDate)}
+                        {account ? (
+                          <Link
+                            href={`/dashboard/accounts/${account.accountNumber}`}
+                            className='transition hover:text-(--color-accent-primary) hover:underline'>
+                            {formatAccountType(transaction.accountType)}
+                          </Link>
+                        ) : (
+                          formatAccountType(transaction.accountType)
+                        )}{' '}
+                        • {formatDate(transaction.transactionDate)}
                       </p>
                     </div>
                     <p
@@ -186,7 +219,7 @@ const RecentTransactions = () => {
               <button
                 type='button'
                 onClick={() => setShowMore((prev) => !prev)}
-                className='dashboard-heading inline-flex items-center justify-center rounded-xl border border-(--color-border) px-4 py-3 transition hover:bg-white/5 hover:cursor-pointer'>
+                className='dashboard-heading inline-flex items-center justify-center rounded-xl border border-(--color-border) px-4 py-3 transition hover:cursor-pointer hover:bg-white/5'>
                 {showMore ? 'Show Less' : 'Show More'}
               </button>
             </div>
