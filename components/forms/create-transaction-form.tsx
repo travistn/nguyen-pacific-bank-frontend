@@ -1,9 +1,9 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { apiFetch } from '@/lib/api/client';
-import { useState, useEffect } from 'react';
 
 type Account = {
   id: number;
@@ -12,11 +12,12 @@ type Account = {
   type: 'CHECKING' | 'SAVINGS';
 };
 
-type TransactionType = 'DEPOSIT' | 'WITHDRAWAL';
+type TransactionType = 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER';
 
 const CreateTransactionForm = () => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountNumber, setAccountNumber] = useState('');
+  const [destinationAccountNumber, setDestinationAccountNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<TransactionType>('DEPOSIT');
   const [description, setDescription] = useState('');
@@ -31,14 +32,21 @@ const CreateTransactionForm = () => {
     const loadAccounts = async () => {
       try {
         const data = await apiFetch('/api/accounts');
-
         setAccounts(data);
 
         if (data.length > 0) {
-          const defaultAccount =
+          const defaultSourceAccount =
             data.find((account: Account) => account.type === 'CHECKING') ?? data[0];
 
-          setAccountNumber(defaultAccount.accountNumber);
+          setAccountNumber(defaultSourceAccount.accountNumber);
+
+          const defaultDestinationAccount = data.find(
+            (account: Account) => account.accountNumber !== defaultSourceAccount.accountNumber,
+          );
+
+          if (defaultDestinationAccount) {
+            setDestinationAccountNumber(defaultDestinationAccount.accountNumber);
+          }
         }
       } catch (error) {
         console.log(error);
@@ -50,6 +58,36 @@ const CreateTransactionForm = () => {
 
     loadAccounts();
   }, []);
+
+  useEffect(() => {
+    if (type !== 'TRANSFER') return;
+
+    if (!destinationAccountNumber || destinationAccountNumber === accountNumber) {
+      const firstAvailableDestination = accounts.find(
+        (account) => account.accountNumber !== accountNumber,
+      );
+
+      setDestinationAccountNumber(firstAvailableDestination?.accountNumber ?? '');
+    }
+  }, [type, accountNumber, destinationAccountNumber, accounts]);
+
+  const sortedAccounts = useMemo(() => {
+    return [...accounts].sort((a, b) => {
+      if (a.type === b.type) return 0;
+      if (a.type === 'CHECKING') return -1;
+      return 1;
+    });
+  }, [accounts]);
+
+  const selectedAccount = accounts.find((account) => account.accountNumber === accountNumber);
+
+  const destinationAccount = accounts.find(
+    (account) => account.accountNumber === destinationAccountNumber,
+  );
+
+  const destinationAccounts = sortedAccounts.filter(
+    (account) => account.accountNumber !== accountNumber,
+  );
 
   const formatMoney = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -67,48 +105,87 @@ const CreateTransactionForm = () => {
     return `**** ${lastFour}`;
   };
 
-  const selectedAccount = accounts.find((account) => account.accountNumber === accountNumber);
-  const sortedAccounts = [...accounts].sort((a, b) => {
-    if (a.type === b.type) return 0;
-    if (a.type === 'CHECKING') return -1;
-    if (b.type === 'CHECKING') return 1;
-    return 0;
-  });
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setErrorMessage('');
 
-  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
+    const parsedAmount = Number(amount);
 
     if (!accountNumber) {
-      setErrorMessage('Please select an account');
+      setErrorMessage(
+        type === 'TRANSFER' ? 'Please select a from account' : 'Please select an account',
+      );
       return;
     }
 
-    if (!amount || Number(amount) <= 0) {
+    if (!amount || Number.isNaN(parsedAmount) || parsedAmount <= 0) {
       setErrorMessage('Please enter an amount greater than 0');
       return;
+    }
+
+    if (
+      (type === 'WITHDRAWAL' || type === 'TRANSFER') &&
+      selectedAccount &&
+      parsedAmount > selectedAccount.balance
+    ) {
+      setErrorMessage('Insufficient funds');
+      return;
+    }
+
+    if (type === 'TRANSFER') {
+      if (!destinationAccountNumber) {
+        setErrorMessage('Please select a to account');
+        return;
+      }
+
+      if (accountNumber === destinationAccountNumber) {
+        setErrorMessage('From and to accounts must be different');
+        return;
+      }
     }
 
     setSubmitting(true);
 
     try {
-      await apiFetch('/api/transactions', {
-        method: 'POST',
-        body: JSON.stringify({
-          accountNumber,
-          amount: Number(amount),
-          type,
-          description: description.trim(),
-        }),
-      });
+      if (type === 'TRANSFER') {
+        await apiFetch('/api/transactions/transfer', {
+          method: 'POST',
+          body: JSON.stringify({
+            fromAccountNumber: accountNumber,
+            toAccountNumber: destinationAccountNumber,
+            amount: parsedAmount,
+          }),
+        });
+      } else {
+        await apiFetch('/api/transactions', {
+          method: 'POST',
+          body: JSON.stringify({
+            accountNumber,
+            amount: parsedAmount,
+            type,
+            description: description.trim(),
+          }),
+        });
+      }
+
+      setDescription('');
+      setAmount('');
 
       alert(
-        type === 'DEPOSIT' ? 'Deposit completed successfully' : 'Withdrawal completed successfully',
+        type === 'TRANSFER'
+          ? 'Transfer completed successfully'
+          : type === 'DEPOSIT'
+            ? 'Deposit completed successfully'
+            : 'Withdrawal completed successfully',
       );
 
       router.push('/dashboard');
+      router.refresh();
     } catch (error) {
       console.log(error);
-      setErrorMessage('Unable to create transaction');
+      setErrorMessage(
+        type === 'TRANSFER' ? 'Unable to complete transfer' : 'Unable to create transaction',
+      );
     } finally {
       setSubmitting(false);
     }
@@ -143,7 +220,7 @@ const CreateTransactionForm = () => {
             Create Transaction
           </h2>
         </div>
-        <p className='dashboard-support md:text-base'>Deposit or withdraw funds</p>
+        <p className='dashboard-support md:text-base'>Deposit, withdraw, or transfer funds</p>
       </div>
       <div className='dashboard-accent-divider mb-4 h-px w-20 rounded-full md:mb-5' />
       {errorMessage && (
@@ -156,8 +233,11 @@ const CreateTransactionForm = () => {
         <article className='dashboard-subcard mb-4 p-4 md:mb-5 md:p-5'>
           <div className='flex items-start justify-between gap-3'>
             <div>
-              <p className='dashboard-eyebrow'>{formatAccountType(selectedAccount.type)}</p>
+              <p className='dashboard-eyebrow'>
+                {type === 'TRANSFER' ? 'From Account' : formatAccountType(selectedAccount.type)}
+              </p>
               <p className='dashboard-support mt-2 md:text-base'>
+                {formatAccountType(selectedAccount.type)} •{' '}
                 {maskAccountNumber(selectedAccount.accountNumber)}
               </p>
             </div>
@@ -173,24 +253,29 @@ const CreateTransactionForm = () => {
           </div>
         </article>
       )}
+      {type === 'TRANSFER' && destinationAccount && (
+        <article className='dashboard-subcard mb-4 p-4 md:mb-5 md:p-5'>
+          <div className='flex items-start justify-between gap-3'>
+            <div>
+              <p className='dashboard-eyebrow'>To Account</p>
+              <p className='dashboard-support mt-2 md:text-base'>
+                {formatAccountType(destinationAccount.type)} •{' '}
+                {maskAccountNumber(destinationAccount.accountNumber)}
+              </p>
+            </div>
+            <span className='dashboard-chip dashboard-chip-active dashboard-chip-label rounded-full px-3 py-1'>
+              Destination
+            </span>
+          </div>
+          <div className='mt-6'>
+            <p className='dashboard-support'>Current Balance</p>
+            <p className='dashboard-heading mt-2 text-2xl md:text-3xl'>
+              {formatMoney(destinationAccount.balance)}
+            </p>
+          </div>
+        </article>
+      )}
       <form onSubmit={handleSubmit} className='grid gap-3 md:gap-4'>
-        <div className='dashboard-subcard p-4 md:p-5'>
-          <label htmlFor='account' className='dashboard-eyebrow block'>
-            Account
-          </label>
-          <select
-            id='account'
-            value={accountNumber}
-            onChange={(e) => setAccountNumber(e.target.value)}
-            disabled={submitting}
-            className='dashboard-heading mt-3 w-full rounded-xl border border-(--color-border) bg-(--color-shell) px-4 py-3 outline-none transition focus:border-(--color-accent-secondary)'>
-            {sortedAccounts.map((account) => (
-              <option key={account.id} value={account.accountNumber}>
-                {formatAccountType(account.type)} • {maskAccountNumber(account.accountNumber)}
-              </option>
-            ))}
-          </select>
-        </div>
         <div className='grid gap-3 md:grid-cols-2 md:gap-4'>
           <div className='dashboard-subcard p-4 md:p-5'>
             <label htmlFor='type' className='dashboard-eyebrow block'>
@@ -204,6 +289,7 @@ const CreateTransactionForm = () => {
               className='dashboard-heading mt-3 w-full rounded-xl border border-(--color-border) bg-(--color-shell) px-4 py-3 outline-none transition focus:border-(--color-accent-secondary)'>
               <option value='DEPOSIT'>Deposit</option>
               <option value='WITHDRAWAL'>Withdrawal</option>
+              <option value='TRANSFER'>Transfer</option>
             </select>
           </div>
           <div className='dashboard-subcard p-4 md:p-5'>
@@ -224,24 +310,72 @@ const CreateTransactionForm = () => {
           </div>
         </div>
         <div className='dashboard-subcard p-4 md:p-5'>
-          <label htmlFor='description' className='dashboard-eyebrow block'>
-            Description
+          <label htmlFor='account' className='dashboard-eyebrow block'>
+            {type === 'TRANSFER' ? 'From Account' : 'Account'}
           </label>
-          <input
-            id='description'
-            type='text'
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
+          <select
+            id='account'
+            value={accountNumber}
+            onChange={(event) => setAccountNumber(event.target.value)}
             disabled={submitting}
-            placeholder='Optional description'
-            className='dashboard-heading mt-3 w-full rounded-xl border border-(--color-border) bg-(--color-shell) px-4 py-3 outline-none transition placeholder:text-(--color-text-muted) focus:border-(--color-accent-secondary)'
-          />
+            className='dashboard-heading mt-3 w-full rounded-xl border border-(--color-border) bg-(--color-shell) px-4 py-3 outline-none transition focus:border-(--color-accent-secondary)'>
+            {sortedAccounts.map((account) => (
+              <option key={account.id} value={account.accountNumber}>
+                {formatAccountType(account.type)} • {maskAccountNumber(account.accountNumber)}
+              </option>
+            ))}
+          </select>
         </div>
+        {type !== 'TRANSFER' && (
+          <div className='dashboard-subcard p-4 md:p-5'>
+            <label htmlFor='description' className='dashboard-eyebrow block'>
+              Description
+            </label>
+            <input
+              id='description'
+              type='text'
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              disabled={submitting}
+              placeholder='Optional description'
+              className='dashboard-heading mt-3 w-full rounded-xl border border-(--color-border) bg-(--color-shell) px-4 py-3 outline-none transition placeholder:text-(--color-text-muted) focus:border-(--color-accent-secondary)'
+            />
+          </div>
+        )}
+        {type === 'TRANSFER' && (
+          <div className='dashboard-subcard p-4 md:p-5'>
+            <label htmlFor='destinationAccount' className='dashboard-eyebrow block'>
+              To Account
+            </label>
+            <select
+              id='destinationAccount'
+              value={destinationAccountNumber}
+              onChange={(event) => setDestinationAccountNumber(event.target.value)}
+              disabled={submitting || destinationAccounts.length === 0}
+              className='dashboard-heading mt-3 w-full rounded-xl border border-(--color-border) bg-(--color-shell) px-4 py-3 outline-none transition focus:border-(--color-accent-secondary)'>
+              {destinationAccounts.length === 0 ? (
+                <option value=''>No destination accounts available</option>
+              ) : (
+                destinationAccounts.map((account) => (
+                  <option key={account.id} value={account.accountNumber}>
+                    {formatAccountType(account.type)} • {maskAccountNumber(account.accountNumber)}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+        )}
         <button
           type='submit'
           disabled={submitting}
-          className='dashboard-heading rounded-xl bg-(--color-accent-primary) px-4 py-3 text-(--color-shell) transition hover:opacity-90 disabled:opacity-60 hover:cursor-pointer'>
-          {submitting ? 'Submitting...' : 'Submit Transaction'}
+          className='dashboard-heading rounded-xl bg-(--color-accent-primary) px-4 py-3 text-(--color-shell) transition hover:cursor-pointer hover:opacity-90 disabled:opacity-60'>
+          {submitting
+            ? type === 'TRANSFER'
+              ? 'Submitting Transfer...'
+              : 'Submitting...'
+            : type === 'TRANSFER'
+              ? 'Transfer Funds'
+              : 'Submit Transaction'}
         </button>
       </form>
     </section>
