@@ -1,5 +1,18 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
+export const isUnauthorizedError = (error: unknown) =>
+  error instanceof ApiError && error.status === 401;
+
 export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
   const res = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
@@ -11,7 +24,7 @@ export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
   });
 
   if (!res.ok) {
-    throw new Error(await res.text());
+    throw new ApiError(await res.text(), res.status);
   }
 
   if (res.status === 204) {
