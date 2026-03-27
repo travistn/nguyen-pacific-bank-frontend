@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nguyen Pacific Bank Frontend
+
+A modern web application for a banking platform built with Next.js.  
+Allows users to manage accounts, view transactions, and perform transfers through a responsive UI.
+
+## Full Stack Application
+
+- 🌐 Frontend Web App (this repo)
+- 🔧 Backend API: [Nguyen Pacific Bank API](https://github.com/travistn/nguyen-pacific-bank-api)
+
+## Features
+
+- User registration and login
+- Authentication with HTTP-only cookies
+- Dashboard with checking and savings accounts
+- View account details and balances
+- View recent transactions
+- Transaction history with filtering
+- Create deposits, withdrawals, and transfers
+- Protected routes for authenticated users
+- Responsive, mobile-first design
+
+## Tech Stack
+
+- Next.js (App Router)
+- TypeScript
+- Tailwind CSS
+- Lucide React
+- Custom API client (`apiFetch`)
 
 ## Getting Started
 
-First, run the development server:
+### 1. Clone the repository
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/travistn/nguyen-pacific-bank-frontend.git
+cd nguyen-pacific-bank-frontend
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Configure environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Create a .env.local file:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+``` env
+NEXT_PUBLIC_API_URL=http://localhost:8080
+```
 
-## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+### 3. Run the application
+```
+npm install
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The app will run at:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+http://localhost:3000
+```
 
-## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Application Overview
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Public Pages
+- `/login`
+- `/register`
+
+### Protected Pages
+- `/dashboard` — account overview
+- `/dashboard/accounts/[id]` — account details
+- `/transactions` — create and view transactions
+
+
+### Authentication
+- Uses HTTP-only cookies for secure authentication
+- Middleware protects dashboard routes
+- Unauthorized users are redirected to `/login`
+
+
+### Notes
+- Designed with a mobile-first approach
+- Centralized API requests using `apiFetch`
+- Built to simulate real-world banking workflows
