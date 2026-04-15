@@ -1,6 +1,7 @@
 import AccountsList from '@/components/dashboard/accounts-list';
 import BalanceSummary from '@/components/dashboard/balance-summary';
 import DashboardHeader from '@/components/dashboard/dashboard-header';
+import DeleteAccountCard from '@/components/dashboard/delete-account-card';
 import RecentTransactions from '@/components/dashboard/recent-transactions';
 import CreateTransactionCard from '@/components/dashboard/create-transaction-card';
 
@@ -14,6 +15,7 @@ const DashboardPage = () => {
           <AccountsList />
           <CreateTransactionCard />
           <RecentTransactions />
+          <DeleteAccountCard />
         </div>
       </section>
     </main>
