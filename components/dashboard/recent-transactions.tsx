@@ -4,15 +4,15 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 import { apiFetch } from '@/lib/api/client';
+import { getRecurringTransaction } from '@/lib/api/recurring-transaction';
+import {
+  isSameRecurringTransaction,
+  mapRecurringTransaction,
+  markRecurringTransaction,
+  type TransactionDisplay,
+} from '@/lib/transactions/recurring-transaction';
 
-type Transaction = {
-  id: number;
-  amount: number;
-  type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER_IN' | 'TRANSFER_OUT';
-  description: string;
-  transactionDate: string;
-  accountType: 'CHECKING' | 'SAVINGS';
-};
+type Transaction = TransactionDisplay;
 
 type Account = {
   id: number;
@@ -30,12 +30,31 @@ const RecentTransactions = () => {
   useEffect(() => {
     const loadTransactions = async () => {
       try {
-        const [transactionsData, accountsData] = await Promise.all([
+        const [transactionsData, accountsData, recurringTransaction] = await Promise.all([
           apiFetch('/api/transactions'),
           apiFetch('/api/accounts'),
+          getRecurringTransaction(),
         ]);
 
-        const sortedTransactions = [...transactionsData].sort(
+        const recurringDisplayTransaction = mapRecurringTransaction(recurringTransaction);
+        const labeledTransactions = recurringDisplayTransaction
+          ? transactionsData.map((transaction: Transaction) =>
+              markRecurringTransaction(transaction, recurringDisplayTransaction),
+            )
+          : transactionsData;
+
+        const hasRecurringTransaction =
+          recurringDisplayTransaction &&
+          labeledTransactions.some((transaction: Transaction) =>
+            isSameRecurringTransaction(transaction, recurringDisplayTransaction),
+          );
+
+        const displayTransactions =
+          recurringDisplayTransaction && !hasRecurringTransaction
+            ? [...labeledTransactions, recurringDisplayTransaction]
+            : labeledTransactions;
+
+        const sortedTransactions = displayTransactions.sort(
           (a: Transaction, b: Transaction) =>
             new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime(),
         );
@@ -186,7 +205,14 @@ const RecentTransactions = () => {
                   className='dashboard-subcard p-4 transition hover:bg-(--color-card) md:p-5'>
                   <div className='flex items-start justify-between gap-3'>
                     <div className='min-w-0'>
-                      <p className='dashboard-eyebrow'>{transaction.type.replace('_', ' ')}</p>
+                      <div className='flex flex-wrap items-center gap-2'>
+                        <p className='dashboard-eyebrow'>{transaction.type.replace('_', ' ')}</p>
+                        {transaction.isRecurring && (
+                          <span className='dashboard-eyebrow rounded-lg border border-(--color-border) px-2 py-1'>
+                            {transaction.recurringLabel ?? 'Recurring'}
+                          </span>
+                        )}
+                      </div>
                       <p className='dashboard-heading mt-2 truncate text-base md:text-lg'>
                         {formatTransactionLabel(transaction)}
                       </p>
