@@ -4,6 +4,11 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 
 import { apiFetch } from '@/lib/api/client';
+import { getRecurringTransaction } from '@/lib/api/recurring-transaction';
+import {
+  mapRecurringTransaction,
+  markRecurringTransaction,
+} from '@/lib/transactions/recurring-transaction';
 import DashboardBackButton from '@/components/dashboard/dashboard-back-button';
 import TransactionList, { type Transaction } from '@/components/transactions/transaction-list';
 import type { TransactionFilters } from '@/components/transactions/transaction-history-filters';
@@ -20,9 +25,18 @@ const TransactionsHistoryPage = () => {
   useEffect(() => {
     const loadTransactions = async () => {
       try {
-        const data = await apiFetch('/api/transactions');
+        const [data, recurringTransaction] = await Promise.all([
+          apiFetch('/api/transactions'),
+          getRecurringTransaction(),
+        ]);
+        const recurringDisplayTransaction = mapRecurringTransaction(recurringTransaction);
+        const transactionsWithRecurringLabels = recurringDisplayTransaction
+          ? data.map((transaction: Transaction) =>
+              markRecurringTransaction(transaction, recurringDisplayTransaction),
+            )
+          : data;
 
-        const sortedTransactions = [...data].sort(
+        const sortedTransactions = [...transactionsWithRecurringLabels].sort(
           (a: Transaction, b: Transaction) =>
             new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime(),
         );

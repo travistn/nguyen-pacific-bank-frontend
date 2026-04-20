@@ -7,15 +7,9 @@ import { apiFetch } from '@/lib/api/client';
 import TransactionHistoryFilters, {
   type TransactionFilters,
 } from '@/components/transactions/transaction-history-filters';
+import type { TransactionDisplay } from '@/lib/transactions/recurring-transaction';
 
-type Transaction = {
-  id: number;
-  amount: number;
-  type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER_IN' | 'TRANSFER_OUT';
-  description: string;
-  transactionDate: string;
-  accountType: 'CHECKING' | 'SAVINGS';
-};
+type Transaction = TransactionDisplay;
 
 type Account = {
   id: number;
@@ -140,7 +134,14 @@ const TransactionList = ({ transactions, filters, onFiltersChange }: Transaction
                 className='dashboard-subcard p-4 transition hover:bg-(--color-card) md:p-5'>
                 <div className='flex items-start justify-between gap-3'>
                   <div className='min-w-0'>
-                    <p className='dashboard-eyebrow'>{transaction.type.replace('_', ' ')}</p>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <p className='dashboard-eyebrow'>{transaction.type.replace('_', ' ')}</p>
+                      {transaction.isRecurring && (
+                        <span className='dashboard-eyebrow rounded-lg border border-(--color-border) px-2 py-1'>
+                          {transaction.recurringLabel ?? 'Recurring'}
+                        </span>
+                      )}
+                    </div>
                     <p className='dashboard-heading mt-2 truncate text-base md:text-lg'>
                       {formatTransactionLabel(transaction)}
                     </p>
