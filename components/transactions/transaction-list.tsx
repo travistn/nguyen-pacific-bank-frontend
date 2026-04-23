@@ -7,7 +7,7 @@ import { apiFetch } from '@/lib/api/client';
 import TransactionHistoryFilters, {
   type TransactionFilters,
 } from '@/components/transactions/transaction-history-filters';
-import type { TransactionDisplay } from '@/lib/transactions/recurring-transaction';
+import type { TransactionDisplay } from '@/lib/transactions/recurring-display';
 
 type Transaction = TransactionDisplay;
 

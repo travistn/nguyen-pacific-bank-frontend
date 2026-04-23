@@ -3,12 +3,25 @@
 import { useState, useEffect } from 'react';
 
 import { apiFetch } from '@/lib/api/client';
+import { getUpcomingRecurringTransactions } from '@/lib/api/recurring-transactions';
+import { applyPastRecurringTransactionsToAccounts } from '@/lib/transactions/recurring-display';
 
 type Account = {
   id: number;
   accountNumber: string;
   balance: number;
   type: 'CHECKING' | 'SAVINGS';
+};
+
+type Transaction = {
+  id: number | string;
+  amount: number;
+  type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER_IN' | 'TRANSFER_OUT';
+  description: string;
+  transactionDate: string;
+  accountType: 'CHECKING' | 'SAVINGS';
+  isRecurring?: boolean;
+  recurringLabel?: string;
 };
 
 const BalanceSummary = () => {
@@ -19,9 +32,19 @@ const BalanceSummary = () => {
   useEffect(() => {
     const loadAccounts = async () => {
       try {
-        const data = await apiFetch('/api/accounts');
+        const [accountsData, transactionsData, upcomingRecurringTransactions] = await Promise.all([
+          apiFetch('/api/accounts'),
+          apiFetch('/api/transactions'),
+          getUpcomingRecurringTransactions(),
+        ]);
 
-        setAccounts(data);
+        const adjustedAccounts = applyPastRecurringTransactionsToAccounts(
+          accountsData as Account[],
+          transactionsData as Transaction[],
+          Array.isArray(upcomingRecurringTransactions) ? upcomingRecurringTransactions : [],
+        );
+
+        setAccounts(adjustedAccounts);
       } catch (error) {
         console.log(error);
         setError('Unable to load balance summary');

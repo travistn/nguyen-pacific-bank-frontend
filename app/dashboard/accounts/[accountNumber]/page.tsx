@@ -5,6 +5,11 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
 import { apiFetch } from '@/lib/api/client';
+import { getUpcomingRecurringTransactions } from '@/lib/api/recurring-transactions';
+import {
+  applyPastRecurringTransactionsToAccounts,
+  mergePastRecurringTransactions,
+} from '@/lib/transactions/recurring-display';
 import DashboardBackButton from '@/components/dashboard/dashboard-back-button';
 
 type Account = {
@@ -15,12 +20,14 @@ type Account = {
 };
 
 type Transaction = {
-  id: number;
+  id: number | string;
   amount: number;
   type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER_IN' | 'TRANSFER_OUT';
   description: string;
   transactionDate: string;
   accountType: 'CHECKING' | 'SAVINGS';
+  isRecurring?: boolean;
+  recurringLabel?: string;
 };
 
 const AccountDetailsPage = () => {
@@ -34,13 +41,26 @@ const AccountDetailsPage = () => {
   useEffect(() => {
     const loadAccountDetails = async () => {
       try {
-        const [accountsData, transactionsData] = await Promise.all([
+        const [accountsData, transactionsData, upcomingRecurringTransactions] = await Promise.all([
           apiFetch('/api/accounts'),
           apiFetch('/api/transactions'),
+          getUpcomingRecurringTransactions(),
         ]);
 
-        setAccounts(accountsData);
-        setTransactions(transactionsData);
+        const recurringTransactions = Array.isArray(upcomingRecurringTransactions)
+          ? upcomingRecurringTransactions
+          : [];
+
+        setAccounts(
+          applyPastRecurringTransactionsToAccounts(
+            accountsData as Account[],
+            transactionsData as Transaction[],
+            recurringTransactions,
+          ),
+        );
+        setTransactions(
+          mergePastRecurringTransactions(transactionsData as Transaction[], recurringTransactions),
+        );
       } catch (error) {
         console.log(error);
         setError('Unable to load account details');
