@@ -1,6 +1,6 @@
-import { ApiError, apiFetch } from '@/lib/api/client';
+import { apiFetch } from '@/lib/api/client';
 
-export type RecurringTransaction = {
+export type UpcomingRecurringTransaction = {
   id?: number | string;
   label?: string;
   name?: string;
@@ -16,17 +16,6 @@ export type RecurringTransaction = {
   transactionDate?: string;
 };
 
-export const getRecurringTransaction = async () => {
-  try {
-    const data = await apiFetch('/api/recurring-transaction');
-
-    return data || null;
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) {
-      return null;
-    }
-
-    console.log(error);
-    return null;
-  }
+export const getUpcomingRecurringTransactions = async () => {
+  return apiFetch('/api/recurring-transactions/upcoming');
 };

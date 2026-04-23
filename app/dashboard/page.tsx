@@ -4,6 +4,7 @@ import DashboardHeader from '@/components/dashboard/dashboard-header';
 import DeleteAccountCard from '@/components/dashboard/delete-account-card';
 import RecentTransactions from '@/components/dashboard/recent-transactions';
 import CreateTransactionCard from '@/components/dashboard/create-transaction-card';
+import UpcomingRecurringTransactions from '@/components/dashboard/upcoming-recurring-transactions';
 
 const DashboardPage = () => {
   return (
@@ -15,6 +16,7 @@ const DashboardPage = () => {
           <AccountsList />
           <CreateTransactionCard />
           <RecentTransactions />
+          <UpcomingRecurringTransactions />
           <DeleteAccountCard />
         </div>
       </section>

@@ -4,13 +4,11 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 import { apiFetch } from '@/lib/api/client';
-import { getRecurringTransaction } from '@/lib/api/recurring-transaction';
+import { getUpcomingRecurringTransactions } from '@/lib/api/recurring-transactions';
 import {
-  isSameRecurringTransaction,
-  mapRecurringTransaction,
-  markRecurringTransaction,
+  mergePastRecurringTransactions,
   type TransactionDisplay,
-} from '@/lib/transactions/recurring-transaction';
+} from '@/lib/transactions/recurring-display';
 
 type Transaction = TransactionDisplay;
 
@@ -30,31 +28,25 @@ const RecentTransactions = () => {
   useEffect(() => {
     const loadTransactions = async () => {
       try {
-        const [transactionsData, accountsData, recurringTransaction] = await Promise.all([
+        const [transactionsData, accountsData, upcomingRecurringTransactions] = await Promise.all([
           apiFetch('/api/transactions'),
           apiFetch('/api/accounts'),
-          getRecurringTransaction(),
+          getUpcomingRecurringTransactions(),
         ]);
 
-        const recurringDisplayTransaction = mapRecurringTransaction(recurringTransaction);
-        const labeledTransactions = recurringDisplayTransaction
-          ? transactionsData.map((transaction: Transaction) =>
-              markRecurringTransaction(transaction, recurringDisplayTransaction),
-            )
-          : transactionsData;
+        const now = Date.now();
+        const transactionsWithRecurring = mergePastRecurringTransactions(
+          transactionsData as Transaction[],
+          Array.isArray(upcomingRecurringTransactions) ? upcomingRecurringTransactions : [],
+        );
 
-        const hasRecurringTransaction =
-          recurringDisplayTransaction &&
-          labeledTransactions.some((transaction: Transaction) =>
-            isSameRecurringTransaction(transaction, recurringDisplayTransaction),
-          );
+        const pastTransactions = transactionsWithRecurring.filter((transaction: Transaction) => {
+          const parsedDate = new Date(transaction.transactionDate).getTime();
 
-        const displayTransactions =
-          recurringDisplayTransaction && !hasRecurringTransaction
-            ? [...labeledTransactions, recurringDisplayTransaction]
-            : labeledTransactions;
+          return !Number.isNaN(parsedDate) && parsedDate <= now;
+        });
 
-        const sortedTransactions = displayTransactions.sort(
+        const sortedTransactions = [...pastTransactions].sort(
           (a: Transaction, b: Transaction) =>
             new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime(),
         );
