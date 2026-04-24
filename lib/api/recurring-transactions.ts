@@ -1,5 +1,7 @@
 import { apiFetch } from '@/lib/api/client';
 
+export const RECURRING_TRANSACTIONS_UPDATED_EVENT = 'recurring-transactions-updated';
+
 export type UpcomingRecurringTransaction = {
   id?: number | string;
   label?: string;
@@ -18,4 +20,20 @@ export type UpcomingRecurringTransaction = {
 
 export const getUpcomingRecurringTransactions = async () => {
   return apiFetch('/api/recurring-transactions/upcoming');
+};
+
+export type CreateRecurringTransactionInput = {
+  accountId: number;
+  description: string;
+  amount: number;
+  dayOfMonth: number;
+};
+
+export const createRecurringTransaction = async (
+  input: CreateRecurringTransactionInput,
+) => {
+  return apiFetch('/api/recurring-transaction', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
 };

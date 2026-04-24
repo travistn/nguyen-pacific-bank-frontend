@@ -41,6 +41,16 @@ const parseDate = (value: string) => {
   return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
 };
 
+const getNextMonthlyOccurrence = (date: Date, now = new Date()) => {
+  const nextOccurrence = new Date(date);
+
+  while (nextOccurrence.getTime() <= now.getTime()) {
+    nextOccurrence.setMonth(nextOccurrence.getMonth() + 1);
+  }
+
+  return nextOccurrence;
+};
+
 const getPreviousMonthlyRunDate = (nextRunDate: Date) => {
   return new Date(
     nextRunDate.getFullYear(),
@@ -60,10 +70,23 @@ const getUpcomingRunDate = (transaction: UpcomingRecurringTransaction) => {
   );
 };
 
+export const getEffectiveUpcomingRunDate = (
+  transaction: UpcomingRecurringTransaction,
+  now = new Date(),
+) => {
+  const parsedDate = parseDate(getUpcomingRunDate(transaction));
+
+  if (!parsedDate) {
+    return null;
+  }
+
+  return getNextMonthlyOccurrence(parsedDate, now);
+};
+
 export const mapUpcomingRecurringTransactionToPastTransaction = (
   transaction: UpcomingRecurringTransaction,
 ): TransactionDisplay | null => {
-  const nextRunDate = parseDate(getUpcomingRunDate(transaction));
+  const nextRunDate = getEffectiveUpcomingRunDate(transaction);
 
   if (!nextRunDate) {
     return null;
@@ -117,6 +140,29 @@ export const getPastRecurringTransactions = (
   return upcomingRecurringTransactions
     .map(mapUpcomingRecurringTransactionToPastTransaction)
     .filter((transaction): transaction is TransactionDisplay => transaction !== null);
+};
+
+export const getTransactionTimestamp = (transaction: TransactionDisplay) => {
+  const timestamp = new Date(transaction.transactionDate).getTime();
+
+  return Number.isNaN(timestamp) ? Number.NEGATIVE_INFINITY : timestamp;
+};
+
+export const compareTransactionsNewestFirst = (
+  a: TransactionDisplay,
+  b: TransactionDisplay,
+) => {
+  const timestampDifference = getTransactionTimestamp(b) - getTransactionTimestamp(a);
+
+  if (timestampDifference !== 0) {
+    return timestampDifference;
+  }
+
+  if (a.isRecurring !== b.isRecurring) {
+    return a.isRecurring ? 1 : -1;
+  }
+
+  return 0;
 };
 
 export const mergePastRecurringTransactions = (
