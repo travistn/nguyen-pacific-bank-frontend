@@ -8,7 +8,10 @@ import { getUpcomingRecurringTransactions } from '@/lib/api/recurring-transactio
 import DashboardBackButton from '@/components/dashboard/dashboard-back-button';
 import TransactionList, { type Transaction } from '@/components/transactions/transaction-list';
 import type { TransactionFilters } from '@/components/transactions/transaction-history-filters';
-import { mergePastRecurringTransactions } from '@/lib/transactions/recurring-display';
+import {
+  compareTransactionsNewestFirst,
+  mergePastRecurringTransactions,
+} from '@/lib/transactions/recurring-display';
 
 const TransactionsHistoryPage = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -33,8 +36,7 @@ const TransactionsHistoryPage = () => {
         );
 
         const sortedTransactions = [...transactionsWithRecurring].sort(
-          (a: Transaction, b: Transaction) =>
-            new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime(),
+          compareTransactionsNewestFirst,
         );
 
         setTransactions(sortedTransactions);

@@ -4,8 +4,13 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 import { apiFetch } from '@/lib/api/client';
-import { getUpcomingRecurringTransactions } from '@/lib/api/recurring-transactions';
 import {
+  getUpcomingRecurringTransactions,
+  RECURRING_TRANSACTIONS_UPDATED_EVENT,
+} from '@/lib/api/recurring-transactions';
+import {
+  compareTransactionsNewestFirst,
+  getTransactionTimestamp,
   mergePastRecurringTransactions,
   type TransactionDisplay,
 } from '@/lib/transactions/recurring-display';
@@ -41,15 +46,12 @@ const RecentTransactions = () => {
         );
 
         const pastTransactions = transactionsWithRecurring.filter((transaction: Transaction) => {
-          const parsedDate = new Date(transaction.transactionDate).getTime();
+          const parsedDate = getTransactionTimestamp(transaction);
 
           return !Number.isNaN(parsedDate) && parsedDate <= now;
         });
 
-        const sortedTransactions = [...pastTransactions].sort(
-          (a: Transaction, b: Transaction) =>
-            new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime(),
-        );
+        const sortedTransactions = [...pastTransactions].sort(compareTransactionsNewestFirst);
 
         setTransactions(sortedTransactions);
         setAccounts(accountsData);
@@ -62,6 +64,23 @@ const RecentTransactions = () => {
     };
 
     loadTransactions();
+
+    const handleRecurringTransactionsUpdated = () => {
+      setLoading(true);
+      loadTransactions();
+    };
+
+    window.addEventListener(
+      RECURRING_TRANSACTIONS_UPDATED_EVENT,
+      handleRecurringTransactionsUpdated,
+    );
+
+    return () => {
+      window.removeEventListener(
+        RECURRING_TRANSACTIONS_UPDATED_EVENT,
+        handleRecurringTransactionsUpdated,
+      );
+    };
   }, []);
 
   const getAccountByType = (type: Account['type']) => {
